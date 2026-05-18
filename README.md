@@ -64,8 +64,10 @@ Future work should also include:
 # Local installation procedure on minikube
 
 ## Create the required docker image
-docker build -f Dockerfile.htcondor-ce-k8s -t cpel/htcondor-ce-k8s:latest .
+```bash
+docker build -f Dockerfile.htcondor-ce-k8s -t cpel/htcondor-ce-k8s:latest .  
 docker push cpel/htcondor-ce-k8s:latest
+```
 
 ## Apply changes
 ```bash
