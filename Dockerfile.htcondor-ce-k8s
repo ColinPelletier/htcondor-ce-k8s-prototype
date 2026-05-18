@@ -1,0 +1,30 @@
+FROM rockylinux/rockylinux:9
+
+RUN dnf -y install dnf-plugins-core epel-release \
+ && dnf config-manager --set-enabled crb \
+ && dnf -y install \
+      https://research.cs.wisc.edu/htcondor/repo/25.x/htcondor-release-current.el9.noarch.rpm \
+ && rpm --import /etc/pki/rpm-gpg/RPM-GPG-KEY-HTCondor-25.x \
+ && dnf -y install \
+      htcondor-ce \
+      python3 \
+      python3-pip \
+ && pip3 install kubernetes \
+ && dnf clean all
+
+RUN useradd -m --uid=1100 testce
+
+RUN mkdir -p /var/lib/condor-ce /var/log/condor-ce /var/run/condor-ce \
+ && chown condor:condor /var/lib/condor-ce /var/log/condor-ce /var/run/condor-ce
+
+COPY config/htcondor-ce/ /etc/condor-ce/config.d/
+COPY config/htcondor-ce-mapfiles/ /etc/condor-ce/mapfiles.d/
+COPY k8s_adapter.py /usr/local/bin/k8s_adapter.py
+COPY docker-entrypoint-ce-k8s.sh /usr/local/bin/docker-entrypoint-ce-k8s.sh
+
+RUN chmod +x /usr/local/bin/k8s_adapter.py \
+ && chmod +x /usr/local/bin/docker-entrypoint-ce-k8s.sh
+
+EXPOSE 9619
+
+ENTRYPOINT ["/usr/local/bin/docker-entrypoint-ce-k8s.sh"]

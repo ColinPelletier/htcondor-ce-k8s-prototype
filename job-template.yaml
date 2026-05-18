@@ -1,0 +1,34 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  generateName: ce-job-
+  labels:
+    app: htcondor-ce-workload
+spec:
+  backoffLimit: 0
+  template:
+    spec:
+      restartPolicy: Never
+      securityContext:
+        runAsUser: 1100
+        runAsGroup: 1100
+        fsGroup: 1100
+      containers:
+      - name: payload
+        image: alpine:3.20
+        command: ["/bin/echo"]
+        args: ["hello-world"]
+        resources:
+          requests:
+            cpu: "1"
+            memory: "128Mi"
+          limits:
+            cpu: "1"
+            memory: "128Mi"
+        volumeMounts:
+        - name: data
+          mountPath: /data
+      volumes:
+      - name: data
+        persistentVolumeClaim:
+          claimName: ce-data

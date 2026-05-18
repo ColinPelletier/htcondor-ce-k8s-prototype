@@ -1,0 +1,36 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: htcondor-ce
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: htcondor-ce
+  template:
+    metadata:
+      labels:
+        app: htcondor-ce
+    spec:
+      serviceAccountName: htcondor-ce
+      securityContext:
+        runAsUser: 0
+        fsGroup: 1100
+      containers:
+      - name: ce
+        image: cpel/htcondor-ce-k8s:latest
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 9619
+        volumeMounts:
+        - name: ce-spool
+          mountPath: /var/lib/condor-ce/spool
+        - name: data
+          mountPath: /data
+      volumes:
+      - name: ce-spool
+        persistentVolumeClaim:
+          claimName: ce-spool
+      - name: data
+        persistentVolumeClaim:
+          claimName: ce-data
