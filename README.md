@@ -1,3 +1,66 @@
+# HTCondor-CE to Kubernetes Jobs Prototype
+
+This prototype evaluates whether jobs submitted through an HTCondor-CE environment can be executed as Kubernetes Jobs.
+
+The main goal is feasibility testing: verify that the CE pod can interact with the Kubernetes API, identify what works, and document the missing components required for full `condor_submit` integration.
+
+## Current Status
+
+### Implemented
+
+- HTCondor-CE container without Slurm dependencies
+- Kubernetes Deployment, Service, PVCs, ServiceAccount, and RBAC to create Kubernetes Jobs
+- Python adapter: `k8s_adapter.py`
+
+Validated flow:
+
+```text
+CE pod → k8s_adapter.py → Kubernetes Job → Pod runs
+```
+
+This confirms that the CE pod can successfully create Kubernetes Jobs.
+
+## Current Limitation
+
+Direct `condor_submit` does not launch Kubernetes Jobs yet.
+
+Current behavior:
+
+```text
+condor_submit → HTCondor-CE queue → job stays idle
+```
+
+Reason: HTCondor-CE is not an execution node.
+
+In the previous setup, Slurm provided the execution backend:
+
+```text
+HTCondor-CE → BLAHP → Slurm workers
+```
+
+For Kubernetes, this backend bridge does not exist yet.
+
+## Missing Component
+A bridge is needed between the HTCondor-CE queue and Kubernetes.
+
+Required flow:
+
+```text
+HTCondor-CE queue → adapter / watcher → Kubernetes Job
+```
+
+The bridge should:
+- Watch the HTCondor-CE queue
+- Detect new jobs
+- Create matching Kubernetes Jobs
+
+Future work should also include:
+- Status synchronization
+- Job cancellation
+- Logs and output handling
+- Resource mapping
+
+
 # Local installation procedure on minikube
 
 ## Create the required docker image
@@ -65,3 +128,9 @@ runuser -u testce -- env CONDOR_CONFIG=/etc/condor-ce/condor_config \
   condor_submit -addr "$SCHEDD_ADDR" /tmp/hello-k8s.sub
 '
 ```
+
+## Conclusion
+
+This prototype confirms that Kubernetes Job creation from inside the HTCondor-CE pod is feasible.
+
+However, full `condor_submit` support requires an additional backend bridge that plays the role previously handled by BLAHP and Slurm. This bridge must watch the HTCondor-CE queue, create Kubernetes Jobs, and eventually synchronize job status, cancellation, logs, outputs, and resource requirements.
